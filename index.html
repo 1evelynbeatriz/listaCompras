@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Compras - Supermercado</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #eef2f5;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    form {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    form input, form select, form button {
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    input[type="number"] {
+      width: 60px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0;
+    }
+
+    li {
+      background: #fff;
+      margin-bottom: 10px;
+      padding: 12px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 5px solid #ccc;
+    }
+
+    li[data-categoria="Alimentos"] { border-color: #af4c4c; }
+    li[data-categoria="Bebidas"]   { border-color: #ff8383; }
+    li[data-categoria="Higiene"]   { border-color: #e40202; }
+    li[data-categoria="Limpeza"]   { border-color: #851b1b; }
+
+    .item-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .delete {
+      background-color: rgb(214, 97, 97);
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🛒 Lista de Compras</h1>
+
+  <form id="form">
+    <input type="text" id="nome" placeholder="Nome do item" required />
+    <input type="number" id="quantidade" placeholder="Qtd" min="1" required />
+    <select id="categoria">
+      <option value="Alimentos">Alimentos</option>
+      <option value="Bebidas">Bebidas</option>
+      <option value="Higiene">Higiene</option>
+      <option value="Limpeza">Limpeza</option>
+    </select>
+    <button type="submit">Adicionar</button>
+  </form>
+
+  <ul id="listaDeCompras"></ul>
+
+  <script>
+    // Referência aos elementos
+    const form = document.getElementById('form');
+    const nomeInput = document.getElementById('nome');
+    const quantidadeInput = document.getElementById('quantidade');
+    const categoriaSelect = document.getElementById('categoria');
+    const listaDeCompras = document.getElementById('listaDeCompras');
+
+    // Carrega dados do localStorage
+    let itens = JSON.parse(localStorage.getItem('itens')) || [];
+
+    // Salva dados no localStorage
+    function salvarItens() {
+      localStorage.setItem('itens', JSON.stringify(itens));
+    }
+
+    // Cria e exibe um item na tela
+    function renderizarItem(item, index) {
+      const li = document.createElement('li');
+      li.setAttribute('data-categoria', item.categoria);
+
+      li.innerHTML = `
+        <div class="item-info">
+          <strong>${item.nome}</strong>
+          <small>Qtd: ${item.quantidade} | Categoria: ${item.categoria}</small>
+        </div>
+        <button class="delete" data-index="${index}">Remover</button>
+      `;
+
+      listaDeCompras.appendChild(li);
+    }
+
+    // Atualiza a lista completa
+    function renderizarLista() {
+      listaDeCompras.innerHTML = '';
+      itens.forEach((item, index) => renderizarItem(item, index));
+    }
+
+    // Adiciona novo item
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const nome = nomeInput.value.trim();
+      const quantidade = parseInt(quantidadeInput.value);
+      const categoria = categoriaSelect.value;
+
+      if (nome === '' || isNaN(quantidade) || quantidade < 1) {
+        alert('Preencha corretamente todos os campos.');
+        return;
+      }
+
+      const novoItem = { nome, quantidade, categoria };
+
+      itens.push(novoItem);
+      salvarItens();
+      renderizarLista();
+
+      form.reset();
+      nomeInput.focus();
+    });
+
+    // Remove item
+    listaDeCompras.addEventListener('click', function(e) {
+      if (e.target.classList.contains('delete')) {
+        const index = e.target.getAttribute('data-index');
+        itens.splice(index, 1);
+        salvarItens();
+        renderizarLista();
+      }
+    });
+
+    // Inicializa lista
+    renderizarLista();
+  </script>
+
+</body>
+</html>
+
+
+
+
