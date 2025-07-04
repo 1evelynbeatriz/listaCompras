@@ -12,7 +12,7 @@
 
     h1 {
       text-align: center;
-      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.199);;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.199);
     }
 
     form {
@@ -103,89 +103,101 @@
 
   <ul id="listaDeCompras"></ul>
 
-  <script>
-    // Referência aos elementos
-    const form = document.getElementById('form');
-    const nomeInput = document.getElementById('nome');
-    const categoriaSelect = document.getElementById('categoria');
-    const listaDeCompras = document.getElementById('listaDeCompras');
-
-    // Carrega itens do localStorage
-    let itens = JSON.parse(localStorage.getItem('itens')) || [];
-
-    function salvarItens() {
-      localStorage.setItem('itens', JSON.stringify(itens));
-    }
-
-    function renderizarItem(item, index) {
-      const li = document.createElement('li');
-      li.setAttribute('data-categoria', item.categoria);
-
-      const checked = item.comprado ? 'checked' : '';
-
-      li.innerHTML = `
-        <div class="item-info">
-          <input type="checkbox" class="checkbox" data-index="${index}" ${checked}>
-          <span class="${item.comprado ? 'comprado' : ''}">${item.nome} <small>(${item.categoria})</small></span>
-        </div>
-        <button class="delete" data-index="${index}">Remover</button>
-      `;
-
-      listaDeCompras.appendChild(li);
-    }
-
-    function renderizarLista() {
-      listaDeCompras.innerHTML = '';
-      itens.forEach((item, index) => renderizarItem(item, index));
-    }
-
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const nome = nomeInput.value.trim();
-      const categoria = categoriaSelect.value;
-
-      if (nome === '') {
-        alert('Digite o nome do item.');
-        return;
-      }
-
-      const novoItem = {
-        nome,
-        categoria,
-        comprado: false
-      };
-
-      itens.push(novoItem);
-      salvarItens();
-      renderizarLista();
-
-      form.reset();
-      nomeInput.focus();
-    });
-
-    // Delegação de eventos para remover ou marcar como comprado
-    listaDeCompras.addEventListener('click', function(e) {
-      const index = e.target.getAttribute('data-index');
-
-      if (e.target.classList.contains('delete')) {
-        itens.splice(index, 1);
-        salvarItens();
-        renderizarLista();
-      }
-
-      if (e.target.classList.contains('checkbox')) {
-        itens[index].comprado = e.target.checked;
-        salvarItens();
-        renderizarLista();
-      }
-    });
-
-    renderizarLista();
-  </script>
-
+  <!-- Importa o script externo -->
+  <script src="script.js"></script>
 </body>
 </html>
+
+<script>
+  // Referência aos elementos HTML
+  const form = document.getElementById('form');
+  const nomeInput = document.getElementById('nome');
+  const categoriaSelect = document.getElementById('categoria');
+  const listaDeCompras = document.getElementById('listaDeCompras');
+
+  // Carrega os itens do localStorage ou inicializa com array vazio
+  let itens = JSON.parse(localStorage.getItem('itens')) || [];
+
+  // Função para salvar os itens no localStorage
+  function salvarItens() {
+    localStorage.setItem('itens', JSON.stringify(itens));
+  }
+
+  // Função para renderizar um item individual na tela
+  function renderizarItem(item, index) {
+    const li = document.createElement('li');
+    li.setAttribute('data-categoria', item.categoria);
+
+    const checked = item.comprado ? 'checked' : '';
+
+    li.innerHTML = `
+      <div class="item-info">
+        <input type="checkbox" class="checkbox" data-index="${index}" ${checked}>
+        <span class="${item.comprado ? 'comprado' : ''}">${item.nome} <small>(${item.categoria})</small></span>
+      </div>
+      <button class="delete" data-index="${index}">Remover</button>
+    `;
+
+    listaDeCompras.appendChild(li);
+  }
+
+  // Função para renderizar todos os itens da lista
+  function renderizarLista() {
+    listaDeCompras.innerHTML = ''; // Limpa a lista atual
+    itens.forEach((item, index) => renderizarItem(item, index));
+  }
+
+  // Ouvinte de evento para o envio do formulário (adicionar item)
+  form.addEventListener('submit', function(e) {
+    e.preventDefault(); // Impede o recarregamento da página
+
+    const nome = nomeInput.value.trim();
+    const categoria = categoriaSelect.value;
+
+    if (nome === '') {
+      alert('Digite o nome do item.');
+      return;
+    }
+
+    // Cria um novo item
+    const novoItem = {
+      nome,
+      categoria,
+      comprado: false
+    };
+
+    // Adiciona item ao array, salva e re-renderiza
+    itens.push(novoItem);
+    salvarItens();      // ⬅️ Salva no localStorage
+    renderizarLista();  // ⬅️ Atualiza a exibição na tela
+
+    form.reset();        // Limpa os campos
+    nomeInput.focus();   // Foca novamente no campo de nome
+  });
+
+  // Ouvinte de eventos para cliques dentro da lista (remover ou marcar como comprado)
+  listaDeCompras.addEventListener('click', function(e) {
+    const index = e.target.getAttribute('data-index');
+
+    // Verifica se o botão clicado é o de remover
+    if (e.target.classList.contains('delete')) {
+      itens.splice(index, 1);  // Remove o item do array
+      salvarItens();           // ⬅️ Atualiza o localStorage
+      renderizarLista();       // ⬅️ Reexibe a lista
+    }
+
+    // Verifica se o clique foi em um checkbox
+    if (e.target.classList.contains('checkbox')) {
+      itens[index].comprado = e.target.checked; // Atualiza status de comprado
+      salvarItens();       // ⬅️ Salva a alteração no localStorage
+      renderizarLista();   // ⬅️ Reexibe a lista com atualização visual
+    }
+  });
+
+  // Inicializa a lista na tela ao carregar a página
+  renderizarLista();
+</script>
+
 
 
 
