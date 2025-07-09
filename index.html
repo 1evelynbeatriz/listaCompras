@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Lista de Compras - Supermercado</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
       background: #fffbfb;
+      color: black;
+      transition: background-color 0.3s, color 0.3s;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    body.dark-mode {
+      background: #121212;
+      color: white;
     }
 
     h1 {
@@ -27,6 +36,15 @@
       padding: 10px;
       font-size: 16px;
       border-radius: 5px;
+      border: 1px solid #ccc;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    body.dark-mode form input,
+    body.dark-mode form select {
+      background-color: #333;
+      color: white;
+      border-color: #555;
     }
 
     button {
@@ -35,6 +53,11 @@
       color: white;
       border: none;
       border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #912f2f;
     }
 
     ul {
@@ -54,12 +77,24 @@
       align-items: center;
       border-left: 5px solid #ccc;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s, border-color 0.3s, color 0.3s;
     }
 
     li[data-categoria="Alimentos"] { border-color: #af4c4c; }
     li[data-categoria="Bebidas"]   { border-color: #ff8383; }
     li[data-categoria="Higiene"]   { border-color: #e40202; }
     li[data-categoria="Limpeza"]   { border-color: #851b1b; }
+
+    body.dark-mode li {
+      background: #333;
+      color: white;
+    }
+
+    /* No modo escuro, mantemos as bordas coloridas conforme categoria */
+    body.dark-mode li[data-categoria="Alimentos"] { border-color: #af4c4c; }
+    body.dark-mode li[data-categoria="Bebidas"]   { border-color: #ff8383; }
+    body.dark-mode li[data-categoria="Higiene"]   { border-color: #e40202; }
+    body.dark-mode li[data-categoria="Limpeza"]   { border-color: #851b1b; }
 
     .item-info {
       display: flex;
@@ -72,20 +107,29 @@
       color: #888;
     }
 
+    body.dark-mode .comprado {
+      color: #bbb;
+    }
+
     .delete {
-      background-color:  rgb(214, 97, 97);
+      background-color: rgb(214, 97, 97);
       color: white;
       border: none;
       padding: 6px 10px;
       border-radius: 3px;
       cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .delete:hover {
+      background-color: rgb(180, 60, 60);
     }
 
     .checkbox {
       transform: scale(1.2);
+      cursor: pointer;
     }
 
-    /* Estilo para o contador de cliques */
     #contadorCliques {
       font-weight: bold;
       font-size: 18px;
@@ -93,12 +137,40 @@
       margin-bottom: 20px;
       display: block;
       color: #af4c4c;
+      transition: color 0.3s;
+    }
+
+    body.dark-mode #contadorCliques {
+      color: #ff9999;
+    }
+
+    /* Botão de alternância de tema */
+    .toggle-theme {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #af4c4c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+      z-index: 1000;
+    }
+
+    .toggle-theme:hover {
+      background-color: #912f2f;
     }
   </style>
 </head>
 <body>
 
   <h1>🛒 Lista de Compras</h1>
+
+  <!-- Botão para alternar tema -->
+  <button class="toggle-theme">Modo Escuro</button>
 
   <form id="form">
     <input type="text" id="nome" placeholder="Nome do item" required />
@@ -116,25 +188,17 @@
   <ul id="listaDeCompras"></ul>
 
   <script>
-    // Referência aos elementos HTML
     const form = document.getElementById('form');
     const nomeInput = document.getElementById('nome');
     const categoriaSelect = document.getElementById('categoria');
     const listaDeCompras = document.getElementById('listaDeCompras');
     const contadorCliques = document.getElementById('contadorCliques');
+    const toggleThemeButton = document.querySelector('.toggle-theme');
 
-    // Carrega os itens do localStorage ou inicializa com array vazio
     let itens = JSON.parse(localStorage.getItem('itens')) || [];
+    let contador = itens.length;
 
-    // Inicializa o contador de cliques
-    let contador = 0;
-
-    // Função para salvar os itens no localStorage
-    function salvarItens() {
-      localStorage.setItem('itens', JSON.stringify(itens));
-    }
-
-    // Função para renderizar um item individual na tela
+    // Renderiza os itens na lista
     function renderizarItem(item, index) {
       const li = document.createElement('li');
       li.setAttribute('data-categoria', item.categoria);
@@ -152,42 +216,36 @@
       listaDeCompras.appendChild(li);
     }
 
-    // Função para renderizar todos os itens da lista
     function renderizarLista() {
-      listaDeCompras.innerHTML = ''; // Limpa a lista atual
+      listaDeCompras.innerHTML = '';
       itens.forEach((item, index) => renderizarItem(item, index));
     }
 
-    // Atualiza a exibição do contador na tela
     function atualizarContador() {
       contadorCliques.textContent = contador;
     }
 
-    // Ouvinte de evento para o envio do formulário (adicionar item)
-    form.addEventListener('submit', function(e) {
-      e.preventDefault(); // Impede o recarregamento da página
+    function salvarItens() {
+      localStorage.setItem('itens', JSON.stringify(itens));
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
 
       const nome = nomeInput.value.trim();
       const categoria = categoriaSelect.value;
 
-      if (nome === '') {
+      if (!nome) {
         alert('Digite o nome do item.');
         return;
       }
 
-      // Cria um novo item
-      const novoItem = {
-        nome,
-        categoria,
-        comprado: false
-      };
+      const novoItem = { nome, categoria, comprado: false };
 
-      // Adiciona item ao array, salva e re-renderiza
       itens.push(novoItem);
       salvarItens();
       renderizarLista();
 
-      // Incrementa o contador e atualiza na tela
       contador++;
       atualizarContador();
 
@@ -195,18 +253,17 @@
       nomeInput.focus();
     });
 
-    // Ouvinte de eventos para cliques dentro da lista (remover ou marcar como comprado)
-    listaDeCompras.addEventListener('click', function(e) {
+    listaDeCompras.addEventListener('click', (e) => {
       const index = e.target.getAttribute('data-index');
 
-      // Verifica se o botão clicado é o de remover
       if (e.target.classList.contains('delete')) {
         itens.splice(index, 1);
         salvarItens();
         renderizarLista();
+        contador--;
+        atualizarContador();
       }
 
-      // Verifica se o clique foi em um checkbox
       if (e.target.classList.contains('checkbox')) {
         itens[index].comprado = e.target.checked;
         salvarItens();
@@ -214,13 +271,33 @@
       }
     });
 
-    // Inicializa a lista na tela ao carregar a página
+    // Alterna tema claro/escuro
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      toggleThemeButton.textContent = isDark ? 'Modo Claro' : 'Modo Escuro';
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    toggleThemeButton.addEventListener('click', toggleTheme);
+
+    // Mantém o tema salvo no localStorage
+    const temaSalvo = localStorage.getItem('theme');
+    if (temaSalvo === 'dark') {
+      document.body.classList.add('dark-mode');
+      toggleThemeButton.textContent = 'Modo Claro';
+    }
+
+    // Inicializa a lista e contador
     renderizarLista();
     atualizarContador();
   </script>
 
 </body>
 </html>
+
+
+
 
 
 
